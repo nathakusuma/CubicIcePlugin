@@ -1,0 +1,21 @@
+name: CubicIcePlugin
+version: '${project.version}'
+main: com.github.nathakusuma.cubiciceplugin.CubicIcePlugin
+api-version: 1.19
+authors: [ BERTOTOD ]
+description: Cubic Ice Plugin
+website: https://github.com/nathakusuma
+commands:
+  staffchat:
+    aliases: s
+    usage: /s <message>
+    description: Staff Chat command
+    permission: cubicice.staffchat
+    permission-message: Kamu tidak memiliki izin untuk menggunakan command itu!
+  cubiciceplugin:
+    description: CubicIcePlugin command
+    aliases:
+      - cubicice
+      - cii
+depend:
+  - CubicIceDiscord

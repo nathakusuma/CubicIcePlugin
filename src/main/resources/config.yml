@@ -1,0 +1,11 @@
+BotToken: "Nzk2NjExMjA5MDg0MTQxNTY5.X_acAA.enRUgPfFiXorKhp-D7bSS2OsCB4"
+GuildID: 437845027150888960
+MySQL:
+  Hostname: 139.99.124.111
+  Port: 3306
+  Database: mc104865
+  Username: mc104865
+  Password: 7d7a624df0
+StaffChatChannelID: 807970487120560158
+TicketCategoryID: 814676580840374292
+StaffRoleID: 735125526951493792
