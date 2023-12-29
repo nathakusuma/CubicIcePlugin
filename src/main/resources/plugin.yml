@@ -1,7 +1,6 @@
 name: CubicIcePlugin
 version: '${project.version}'
 main: com.github.nathakusuma.cubiciceplugin.CubicIcePlugin
-api-version: 1.19
 authors: [ BERTOTOD ]
 description: Cubic Ice Plugin
 website: https://github.com/nathakusuma

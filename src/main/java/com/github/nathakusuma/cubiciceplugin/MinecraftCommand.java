@@ -8,14 +8,14 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
-public class Commands implements CommandExecutor {
+public class MinecraftCommand implements CommandExecutor {
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command cmd, @NotNull String label, @NotNull String[] args) {
         Player player;
         StringBuilder sb;
         byte i;
         if (args.length == 0)
             sender.sendMessage("" + ChatColor.GOLD + "This server is running CubicIcePlugin by BERTOTOD");
-        switch (args[0].toLowerCase()) {
+        else switch (args[0].toLowerCase()) {
             case "_flyticket":
                 if (sender instanceof Player) return true;
                 player = Bukkit.getPlayer(args[1]);

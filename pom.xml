@@ -6,7 +6,7 @@
 
     <groupId>com.github.nathakusuma</groupId>
     <artifactId>CubicIcePlugin</artifactId>
-    <version>3.0-SNAPSHOT</version>
+    <version>3.1</version>
     <packaging>jar</packaging>
 
     <name>CubicIcePlugin</name>

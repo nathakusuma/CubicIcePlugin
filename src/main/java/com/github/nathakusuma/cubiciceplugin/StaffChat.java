@@ -1,6 +1,9 @@
 package com.github.nathakusuma.cubiciceplugin;
 
-import com.github.nathakusuma.cubicicediscord.CubicIceDiscord;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
@@ -20,30 +23,25 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
-
 public class StaffChat extends ListenerAdapter implements CommandExecutor, Listener {
-
     private final CubicIcePlugin plugin = CubicIcePlugin.getPlugin(CubicIcePlugin.class);
-    private final long channelId = plugin.getConfig().getLong("StaffChatChannelID");
+    private final long channelId = this.plugin.getConfig().getLong("StaffChatChannelID");
     private TextChannel channel = null;
     private static List<UUID> state = null;
     private BossBar bossBar;
     private final String permission = "cubicice.staffchat";
 
     private TextChannel getChannel() {
-        if (channel == null) channel = plugin.bot.getTextChannelById(channelId);
-        return channel;
+        if (this.channel == null) this.channel = CubicIcePlugin.bot.getTextChannelById(this.channelId);
+        return this.channel;
     }
 
     private BossBar getBossBar() {
-        if (bossBar == null) {
-            bossBar = Bukkit.createBossBar(
-                    ChatColor.translateAlternateColorCodes('&',
-                            "&f&lStaff Chat"), BarColor.PINK, BarStyle.SOLID);
-            bossBar.setVisible(true);
+        if (this.bossBar == null) {
+            this.bossBar = Bukkit.createBossBar(
+                    ChatColor.translateAlternateColorCodes('&', "&f&lStaff Chat"), BarColor.PINK, BarStyle.SOLID);
+
+            this.bossBar.setVisible(true);
         }
         return this.bossBar;
     }
@@ -58,28 +56,29 @@ public class StaffChat extends ListenerAdapter implements CommandExecutor, Liste
     private void setEnabled(UUID uuid) {
         if (!isEnabled(uuid)) state.add(uuid);
         Player p = Bukkit.getPlayer(uuid);
-        if (p == null || !p.isOnline()) return;
+        if (p == null || !p.isOnline())
+            return;
         getBossBar().addPlayer(p);
-        p.sendMessage(ChatColor.translateAlternateColorCodes('&',
-                "&d[&5Staff Chat&d]" + " &7»&r " + "&aStaff Chat diaktifkan"));
+        p.sendMessage(ChatColor.translateAlternateColorCodes('&', "&d[&5Staff Chat&d] &7»&r &aStaff Chat diaktifkan"));
     }
+
 
     private void setDisabled(UUID uuid) {
         if (isEnabled(uuid)) state.remove(uuid);
         Player p = Bukkit.getPlayer(uuid);
-        if (p == null || !p.isOnline()) return;
+        if (p == null || !p.isOnline())
+            return;
         getBossBar().removePlayer(p);
-        p.sendMessage(ChatColor.translateAlternateColorCodes('&',
-                "&d[&5Staff Chat&d]" + " &7»&r " + "&cStaff Chat dinonaktifkan"));
+        p.sendMessage(ChatColor.translateAlternateColorCodes('&', "&d[&5Staff Chat&d] &7»&r &cStaff Chat dinonaktifkan"));
     }
 
+
     private void sendStaffChat(String author, String message) {
-        Bukkit.broadcast(ChatColor.translateAlternateColorCodes('&',
-                "&d[&5Staff Chat&d] " + author + " &7»&r " + message), permission);
+        Bukkit.broadcast(ChatColor.translateAlternateColorCodes('&', "&d[&5Staff Chat&d] " + author + " &7»&r " + message), permission);
         getChannel().sendMessage("**" + author + "** » " + message).queue();
     }
 
-    @Override
+
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
         Player player = null;
         if (sender instanceof Player) player = (Player) sender;
@@ -102,31 +101,36 @@ public class StaffChat extends ListenerAdapter implements CommandExecutor, Liste
 
     @EventHandler
     public void onChat(AsyncPlayerChatEvent event) {
-        if (!event.getPlayer().hasPermission(permission)) return;
-        if (!isEnabled(event.getPlayer().getUniqueId())) return;
+        if (!event.getPlayer().hasPermission(permission))
+            return;
+        if (!isEnabled(event.getPlayer().getUniqueId()))
+            return;
         event.setCancelled(true);
         sendStaffChat(event.getPlayer().getName(), event.getMessage());
     }
 
-    @Override
+
     public void onMessageReceived(MessageReceivedEvent event) {
-        if (event.getAuthor().isBot()) return;
-        if (event.getChannel().getIdLong() != channelId) return;
-        Bukkit.broadcast(ChatColor.translateAlternateColorCodes('&',
-                "&9[&1Staff Chat&9] " + event.getAuthor().getName() + " &7»&r " + event.getMessage().getContentDisplay()), permission);
+        if (event.getAuthor().isBot())
+            return;
+        if (event.getChannel().getIdLong() != this.channelId)
+            return;
+        Bukkit.broadcast(ChatColor.translateAlternateColorCodes('&', "&9[&1Staff Chat&9] " + event
+                .getAuthor().getName() + " &7»&r " + event.getMessage().getContentDisplay()), permission);
     }
 
     @EventHandler
     public void onJoin(PlayerJoinEvent event) {
-        if (!event.getPlayer().hasPermission(permission)) return;
+        if (!event.getPlayer().hasPermission(permission))
+            return;
         getChannel().sendMessage("_**" + event.getPlayer().getName() + " masuk**_").queue();
     }
 
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
-        if (!event.getPlayer().hasPermission(permission)) return;
+        if (!event.getPlayer().hasPermission(permission))
+            return;
         getChannel().sendMessage("_**" + event.getPlayer().getName() + " keluar**_").queue();
         setDisabled(event.getPlayer().getUniqueId());
     }
-
 }
