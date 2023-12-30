@@ -10,13 +10,18 @@ Fly:
     polar: 1h
     north: 30m
 
-AFK_Location:
-  world: xxxxxxxxxx
-  x: 0000000000
-  y: 0000000000
-  z: 0000000000
-  yaw: 0000000000
-  pitch: 0000000000
+Anti_AFK:
+  Check:
+    interval: 60
+    tolerance: 5
+  Station:
+    world: xxxxxxxxxx
+    x: 0000000000
+    y: 0000000000
+    z: 0000000000
+    yaw: 0000000000
+    pitch: 0000000000
+    radius: 8
 
 MySQL:
   Hostname: 0000000000
@@ -29,3 +34,4 @@ GuildID: 437845027150888960
 StaffChatChannelID: 807970487120560158
 TicketCategoryID: 814676580840374292
 StaffRoleID: 735125526951493792
+DonateInformationChannelID: 1190296645955506186

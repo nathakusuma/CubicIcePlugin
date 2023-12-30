@@ -27,7 +27,7 @@ public class MySQL {
     public static void createTable() {
         try {
             getConnection().prepareStatement(
-                    "CREATE TABLE IF NOT EXISTS ticket (channel_id BIGINT NOT NULL,creator_id BIGINT NOT NULL,waiting_donate_proof BOOLEAN NOT NULL DEFAULT FALSE,waiting_donate_question BOOLEAN NOT NULL DEFAULT FALSE,PRIMARY KEY (channel_id))"
+                    "CREATE TABLE IF NOT EXISTS ticket (channel_id BIGINT NOT NULL,creator_id BIGINT NOT NULL,PRIMARY KEY (channel_id))"
             ).executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();

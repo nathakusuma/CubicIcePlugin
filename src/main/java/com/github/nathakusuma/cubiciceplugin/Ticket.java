@@ -92,17 +92,6 @@ public class Ticket extends ListenerAdapter {
     public void onMessageReceived(@NotNull MessageReceivedEvent event) {
         if (event.getAuthor().isBot())
             return;
-        if (event.getChannel().getName().startsWith("donate-")) {
-            if (!isCreator(event.getAuthor().getIdLong(), event.getChannel().getIdLong()))
-                return;
-            try {
-                donateQuestionAsked(event.getChannel().asTextChannel(), event.getMessage());
-                donateProofed(event.getChannel().asTextChannel(), event.getMessage());
-            } catch (SQLException e) {
-                throw new RuntimeException(e);
-            }
-        }
-
 
         if (!Objects.requireNonNull(event.getMember()).getRoles().contains(CubicIcePlugin.staffRole))
             return;
@@ -246,18 +235,6 @@ public class Ticket extends ListenerAdapter {
         }
     }
 
-    MessageEmbed notDonatedResponse = new EmbedBuilder()
-            .setColor(CubicIcePlugin.themeColor)
-            .setTitle("Petunjuk Donate")
-            .setDescription("Silakan donate sesuai petunjuk di #INGATGANTI_CHANNELDONATE\n" +
-                    "Jika sudah selesai transaksi donate, tekan tombol 💵 lalu kirim screenshot bukti transaksi\n" +
-                    "Jika ada pertanyaan, ketik pertanyaan disini lalu tekan tombol ❓\n")
-            .build();
-
-    Button donateDone = Button.secondary("ticket:donate_done", "💵");
-    Button donateAsk = Button.secondary("ticket:donate_ask", "❓");
-
-
     public void onModalInteraction(@NotNull ModalInteractionEvent event) {
         if (!event.getModalId().startsWith("ticket:"))
             return;
@@ -265,8 +242,6 @@ public class Ticket extends ListenerAdapter {
         Category category = event.getJDA().getCategoryById(plugin.getConfig().getLong("TicketCategoryID"));
         assert category != null;
         String username = event.getValue("username").getAsString();
-        boolean isDonateTicket = event.getModalId().equals("ticket:donate");
-        boolean donated = event.getValue("status").getAsString().equalsIgnoreCase("sudah");
         category.createTextChannel(ticketType + "-" + username)
                 .setTopic(event.getUser().getAsMention())
                 .addMemberPermissionOverride(event.getUser().getIdLong(), EnumSet.of(Permission.VIEW_CHANNEL), null)
@@ -296,103 +271,19 @@ public class Ticket extends ListenerAdapter {
                         String capital = v.getId().substring(0, 1).toUpperCase();
                         sb.append("**").append(capital).append(v.getId().substring(1)).append("**").append(" : ").append(v.getAsString()).append("\n");
                     }
-                    if (isDonateTicket) {
-                        ticketChannel.sendMessageEmbeds(new EmbedBuilder()
-                                .setColor(CubicIcePlugin.themeColor)
-                                .setTitle("Formulir Tiket")
-                                .setDescription(sb.toString()).build())
-                                .queue();
-                        if (donated) {
-                            try {
-                                waitDonateProof(ticketChannel, event.getUser(), null);
-                            } catch (SQLException e) {
-                                throw new RuntimeException(e);
-                            }
-                        } else {
-                            ticketChannel.sendMessageEmbeds(this.notDonatedResponse).setActionRow(this.donateDone, this.donateAsk).queue();
+                    ticketChannel.sendMessage(CubicIcePlugin.staffRole.getAsMention() + " **TIKET BARU 🚨 [ __" + ticketType.toUpperCase() + "__ ]**")
+                            .setEmbeds(new EmbedBuilder()
+                                    .setColor(CubicIcePlugin.themeColor)
+                                    .setTitle("Formulir Tiket")
+                                    .setDescription(sb.toString()).build())
+                            .queue();
+                    if(ticketType.equals("donate")) {
+                        if(!event.getValue("status").getAsString().equalsIgnoreCase("sudah")) {
+                            ticketChannel.sendMessage("Silakan donate sesuai petunjuk di <#"+plugin.getConfig().getLong("DonateInformationChannelID")+">").queue();
                         }
-                    } else {
-                        ticketChannel.sendMessage(CubicIcePlugin.staffRole.getAsMention() + " **TIKET BARU 🚨 [ __" + ticketType.toUpperCase() + "__ ]**")
-                                .setEmbeds(new EmbedBuilder()
-                                        .setColor(CubicIcePlugin.themeColor)
-                                        .setTitle("Formulir Tiket")
-                                        .setDescription(sb.toString()).build())
-                                .queue();
                     }
                 });
     }
-
-    private void waitDonateProof(TextChannel ticketChannel, User creator, InteractionHook hook) throws SQLException {
-        PreparedStatement ps = MySQL.getConnection().prepareStatement("UPDATE ticket SET waiting_donate_proof=true WHERE channel_id=?");
-        ps.setLong(1, ticketChannel.getIdLong());
-        ps.executeUpdate();
-        if (hook != null) {
-            hook.editOriginalEmbeds(this.notDonatedResponse).setActionRow(Button.primary("ticket:donate_done", "💵").asDisabled(), this.donateAsk.asDisabled()).queue();
-        }
-        ticketChannel.sendMessage(creator.getAsMention() + ", kirim **bukti transaksi** donatemu di sini!").queue();
-    }
-
-    private void donateProofed(TextChannel ticketChannel, Message message) throws SQLException {
-        PreparedStatement ps = MySQL.getConnection().prepareStatement("SELECT waiting_donate_proof FROM ticket WHERE channel_id=?");
-        ps.setLong(1, ticketChannel.getIdLong());
-        ResultSet rs = ps.executeQuery();
-        if (rs.next()) {
-            boolean waiting = rs.getBoolean("waiting_donate_proof");
-            if (waiting) {
-                PreparedStatement ps2 = MySQL.getConnection().prepareStatement("UPDATE ticket SET waiting_donate_proof=false WHERE channel_id=?");
-                ps2.setLong(1, ticketChannel.getIdLong());
-                ps2.executeUpdate();
-                message.reply(CubicIcePlugin.staffRole.getAsMention() + " **TIKET BARU 🚨 [ __DONATE-DONE__ ]**").mentionRepliedUser(false).queue();
-            }
-        }
-    }
-
-    private void waitDonateQuestion(TextChannel ticketChannel, User creator, InteractionHook hook) throws SQLException {
-        PreparedStatement ps = MySQL.getConnection().prepareStatement("UPDATE ticket SET waiting_donate_question=true WHERE channel_id=?");
-        ps.setLong(1, ticketChannel.getIdLong());
-        ps.executeUpdate();
-        hook.editOriginalEmbeds(this.notDonatedResponse).setActionRow(this.donateDone.asDisabled(), Button.primary("ticket:donate_ask", "❓").asDisabled()).queue();
-        ticketChannel.sendMessage(creator.getAsMention() + ", kamu mau bertanya apa?").queue();
-    }
-
-    private void donateQuestionAsked(TextChannel ticketChannel, Message message) throws SQLException {
-        PreparedStatement ps = MySQL.getConnection().prepareStatement("SELECT waiting_donate_question FROM ticket WHERE channel_id=?");
-        ps.setLong(1, ticketChannel.getIdLong());
-        ResultSet rs = ps.executeQuery();
-        if (rs.next()) {
-            boolean waiting = rs.getBoolean("waiting_donate_question");
-            if (waiting) {
-                PreparedStatement ps2 = MySQL.getConnection().prepareStatement("UPDATE ticket SET waiting_donate_question=false WHERE channel_id=?");
-                ps2.setLong(1, ticketChannel.getIdLong());
-                ps2.executeUpdate();
-                message.reply(CubicIcePlugin.staffRole.getAsMention() + " **TIKET BARU 🚨 [ __DONATE-ASK__ ]**").mentionRepliedUser(false).queue();
-            }
-        }
-    }
-
-    public void onButtonInteraction(@NotNull ButtonInteractionEvent event) {
-        if (!event.getButton().getId().startsWith("ticket:donate_"))
-            return;
-        if (!isCreator(event.getUser().getIdLong(), event.getChannel().getIdLong())) {
-            event.replyEmbeds(this.wrongChannel).setEphemeral(true).queue();
-        }
-        String buttonId = event.getButton().getId().replaceFirst("ticket:donate_", "");
-        event.deferEdit().queue();
-        if (buttonId.equals("done")) {
-            try {
-                waitDonateProof(event.getChannel().asTextChannel(), event.getUser(), event.getHook());
-            } catch (SQLException e) {
-                throw new RuntimeException(e);
-            }
-        } else {
-            try {
-                waitDonateQuestion(event.getChannel().asTextChannel(), event.getUser(), event.getHook());
-            } catch (SQLException e) {
-                throw new RuntimeException(e);
-            }
-        }
-    }
-
 
     public void onSlashCommandInteraction(@NotNull SlashCommandInteractionEvent event) {
         if (!event.getName().equals("ticket"))
